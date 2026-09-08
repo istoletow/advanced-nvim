@@ -1,22 +1,27 @@
 return {
     {
         "williamboman/mason.nvim",
-        opts = {},
-    },
-
-    {
-        "williamboman/mason-lspconfig.nvim",
 
         dependencies = {
-            "williamboman/mason.nvim",
+            "williamboman/mason-lspconfig.nvim",
         },
 
-        opts = {
-            ensure_installed = {
-                "clangd",
-                "lua_ls",
-            },
-        },
+        config = function()
+            require("mason").setup()
+
+            require("mason-lspconfig").setup({
+                ensure_installed = {
+                    "clangd",
+                    "pyright",
+                    "gopls",
+                    "lua_ls",
+                },
+
+                automatic_enable = {
+                    exclude = {},
+                },
+            })
+        end,
     },
 
     {
@@ -29,8 +34,7 @@ return {
 
         config = function()
             local capabilities =
-                require("blink.cmp")
-                .get_lsp_capabilities()
+                require("blink.cmp").get_lsp_capabilities()
 
             local navic =
                 require("nvim-navic")
@@ -42,11 +46,8 @@ return {
                 },
 
                 signs = true,
-
                 underline = true,
-
                 update_in_insert = false,
-
                 severity_sort = true,
 
                 float = {
@@ -55,45 +56,46 @@ return {
                 },
             })
 
-            vim.fn.sign_define(
-                "DiagnosticSignError",
-                {
-                    text = "E ",
-                    texthl = "DiagnosticSignError",
-                }
-            )
+            vim.fn.sign_define("DiagnosticSignError", {
+                text = "E ",
+                texthl = "DiagnosticSignError",
+            })
 
-            vim.fn.sign_define(
-                "DiagnosticSignWarn",
-                {
-                    text = "W ",
-                    texthl = "DiagnosticSignWarn",
-                }
-            )
+            vim.fn.sign_define("DiagnosticSignWarn", {
+                text = "W ",
+                texthl = "DiagnosticSignWarn",
+            })
 
-            vim.fn.sign_define(
-                "DiagnosticSignHint",
-                {
-                    text = "H ",
-                    texthl = "DiagnosticSignHint",
-                }
-            )
+            vim.fn.sign_define("DiagnosticSignHint", {
+                text = "H ",
+                texthl = "DiagnosticSignHint",
+            })
 
-            vim.fn.sign_define(
-                "DiagnosticSignInfo",
-                {
-                    text = "I ",
-                    texthl = "DiagnosticSignInfo",
-                }
-            )
+            vim.fn.sign_define("DiagnosticSignInfo", {
+                text = "I ",
+                texthl = "DiagnosticSignInfo",
+            })
 
-            vim.lsp.handlers["textDocument/hover"] =
-                vim.lsp.with(
-                    vim.lsp.handlers.hover,
-                    {
-                        border = "rounded",
-                    }
+            vim.lsp.handlers["textDocument/hover"] = function(
+                err,
+                result,
+                ctx,
+                config
+            )
+                config = config or {}
+                config.border = "rounded"
+
+                return vim.lsp.handlers.hover(
+                    err,
+                    result,
+                    ctx,
+                    config
                 )
+            end
+
+            --------------------------------------------------
+            -- C / C++
+            --------------------------------------------------
 
             vim.lsp.config("clangd", {
                 capabilities = capabilities,
@@ -109,24 +111,21 @@ return {
 
                     "--background-index",
                     "--clang-tidy",
-
                     "--completion-style=detailed",
-
                     "--header-insertion=iwyu",
-
                     "--function-arg-placeholders",
-
                     "--fallback-style=llvm",
-
                     "--all-scopes-completion",
-
                     "--cross-file-rename",
-
                     "--pch-storage=memory",
                 },
             })
 
-            vim.lsp.config("lua_ls", {
+            --------------------------------------------------
+            -- Python
+            --------------------------------------------------
+
+            vim.lsp.config("pyright", {
                 capabilities = capabilities,
 
                 on_attach = function(client, bufnr)
@@ -136,10 +135,85 @@ return {
                 end,
             })
 
-            vim.lsp.enable("clangd")
-            vim.lsp.enable("lua_ls")
+            --------------------------------------------------
+            -- Go
+            --------------------------------------------------
+
+            vim.lsp.config("gopls", {
+                capabilities = capabilities,
+
+                on_attach = function(client, bufnr)
+                    if client.server_capabilities.documentSymbolProvider then
+                        navic.attach(client, bufnr)
+                    end
+                end,
+
+                settings = {
+                    gopls = {
+                        gofumpt = true,
+                        staticcheck = true,
+                        usePlaceholders = true,
+                        completeUnimported = true,
+                        analyses = {
+                            unusedparams = true,
+                            shadow = true,
+                        },
+                    },
+                },
+            })
+
+            --------------------------------------------------
+            -- Lua
+            --------------------------------------------------
+
+            vim.lsp.config("lua_ls", {
+                capabilities = capabilities,
+
+                on_attach = function(client, bufnr)
+                    if client.server_capabilities.documentSymbolProvider then
+                        navic.attach(client, bufnr)
+                    end
+                end,
+
+                settings = {
+                    Lua = {
+                        diagnostics = {
+                            globals = {
+                                "vim",
+                            },
+                        },
+
+                        workspace = {
+                            checkThirdParty = false,
+                        },
+
+                        telemetry = {
+                            enable = false,
+                        },
+                    },
+                },
+            })
+
+            --------------------------------------------------
+            -- Enable LSP
+            --------------------------------------------------
+
+            vim.lsp.enable({
+                "clangd",
+                "pyright",
+                "gopls",
+                "lua_ls",
+            })
+
+            --------------------------------------------------
+            -- Inlay hints
+            --------------------------------------------------
 
             vim.lsp.inlay_hint.enable(true)
+
+            --------------------------------------------------
+            -- Keymaps
+            --------------------------------------------------
 
             local map = vim.keymap.set
 

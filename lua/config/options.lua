@@ -43,11 +43,11 @@ opt.completeopt = {
 opt.list = true
 
 opt.listchars = {
-    tab = "→ ",
-    trail = "·",
-    nbsp = "␣",
-    extends = "»",
-    precedes = "«",
+    tab = "  ",
+    -- trail = "·",
+    -- nbsp = "␣",
+    -- extends = "»",
+    -- precedes = "«",
     eol = "↲",
 }
 
@@ -65,7 +65,7 @@ vim.opt.relativenumber = true
 
 -- vim.opt.signcolumn = "yes"
 
-vim.opt.colorcolumn = "100"
+-- vim.opt.colorcolumn = "100"
 
 vim.api.nvim_set_hl(
     0,
